@@ -159,22 +159,6 @@ docker-compose down -v
 
 ---
 
-## ☁️ Subir a GitHub
-
-```bash
-# Desde la raíz del proyecto
-git init
-git add .
-git commit -m "feat: initial full stack TaskApp"
-git branch -M main
-git remote add origin https://github.com/TU_USUARIO/taskapp.git
-git push -u origin main
-```
-
-> Reemplaza `TU_USUARIO` con tu usuario de GitHub.
-
----
-
 ## 📝 Notas de Desarrollo
 
 - Las variables de entorno sensibles van en `.env` (incluido en `.gitignore`)
