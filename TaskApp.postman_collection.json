@@ -1,0 +1,249 @@
+{
+  "info": {
+    "name": "TaskApp API",
+    "description": "Colección de pruebas para la API REST de TaskApp (Node + Express + MongoDB)",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "task_id",
+      "value": "",
+      "type": "string",
+      "description": "Se rellena automáticamente al crear una tarea"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/health",
+        "description": "Verifica que el servidor está corriendo correctamente."
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Status ok', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.status).to.eql('ok');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Crear Tarea",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/tasks",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Aprender Docker\",\n  \"description\": \"Conteneirizar el proyecto Full Stack\",\n  \"priority\": \"high\"\n}"
+        },
+        "description": "Crea una nueva tarea. Guarda el _id en la variable task_id."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 201', () => pm.response.to.have.status(201));",
+              "pm.test('Tarea creada', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.success).to.be.true;",
+              "  pm.expect(json.data).to.have.property('_id');",
+              "  pm.collectionVariables.set('task_id', json.data._id);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Listar Tareas",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/tasks",
+        "description": "Retorna todas las tareas ordenadas por fecha de creación (desc)."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Array de tareas', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.success).to.be.true;",
+              "  pm.expect(json.data).to.be.an('array');",
+              "  pm.expect(json.count).to.be.a('number');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Obtener Tarea por ID",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/tasks/{{task_id}}",
+        "description": "Retorna una tarea específica por su MongoDB _id."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Tarea correcta', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.success).to.be.true;",
+              "  pm.expect(json.data._id).to.eql(pm.collectionVariables.get('task_id'));",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Actualizar Tarea",
+      "request": {
+        "method": "PUT",
+        "url": "{{base_url}}/api/tasks/{{task_id}}",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Aprender Docker y Kubernetes\",\n  \"completed\": true,\n  \"priority\": \"high\"\n}"
+        },
+        "description": "Actualiza campos de una tarea existente."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Tarea actualizada', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.success).to.be.true;",
+              "  pm.expect(json.data.completed).to.be.true;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Marcar como Pendiente",
+      "request": {
+        "method": "PUT",
+        "url": "{{base_url}}/api/tasks/{{task_id}}",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"completed\": false\n}"
+        },
+        "description": "Marca una tarea como no completada."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Tarea pendiente', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.data.completed).to.be.false;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Error - Crear sin título",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/tasks",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"description\": \"Sin título\"\n}"
+        },
+        "description": "Prueba de validación: debe retornar 400 si falta el título."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 400 por validación', () => pm.response.to.have.status(400));",
+              "pm.test('Error correcto', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.success).to.be.false;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Error - ID inexistente",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/tasks/000000000000000000000000",
+        "description": "Prueba de manejo de errores: ID válido pero inexistente."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 404', () => pm.response.to.have.status(404));",
+              "pm.test('Not Found', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.success).to.be.false;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Eliminar Tarea",
+      "request": {
+        "method": "DELETE",
+        "url": "{{base_url}}/api/tasks/{{task_id}}",
+        "description": "Elimina permanentemente una tarea por ID."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Confirmación de eliminación', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.success).to.be.true;",
+              "  pm.expect(json.message).to.eql('Task deleted');",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
